@@ -10,7 +10,6 @@ router = Router()
 async def cmd_view(message: types.Message):
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
-        # Показываем только будущие брони
         async with db.execute("""
             SELECT b.*, u.username, u.tg_handle 
             FROM bookings b 
@@ -37,7 +36,8 @@ async def cmd_view(message: types.Message):
         text += f"• {start}–{end}: {row['username']} (@{row['tg_handle']})\n"
 
     await message.answer(text, parse_mode="Markdown")
-    @router.message(Command("my"))
+
+@router.message(Command("my"))
 async def cmd_my(message: types.Message):
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
