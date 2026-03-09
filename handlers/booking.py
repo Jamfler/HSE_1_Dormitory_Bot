@@ -8,23 +8,21 @@ from config import DB_PATH
 
 router = Router()
 
-# --- ДОБАВЬ ЭТОТ БЛОК (Инструкция) ---
 @router.message(Command("book"))
 async def cmd_book(message: types.Message):
     await message.answer(
         "📝 **Инструкция по бронированию**\n\n"
-        "Просто отправь мне сообщение в формате:\n"
+        "Отправь сообщение в формате:\n"
         "`[дата] [начало] [конец]`\n\n"
         "**Примеры:**\n"
-        "• `10.03 14:00 16:30` — на 10 марта\n"
-        "• `15:00 17:00` — забронировать на сегодня\n\n"
+        "• `10.03 14:00 16:30` — на дату\n"
+        "• `15:00 17:00` — на сегодня\n\n"
         "**Правила:**\n"
         "• Минимум — 1 час (2 слота)\n"
         "• Максимум — 3.5 часа в день\n"
         "• Нельзя бронировать 2 дня подряд"
     )
 
-# Твой старый код парсинга (оставляем без изменений)
 @router.message(F.text & ~F.text.startswith("/"))
 async def process_booking_text(message: types.Message):
     user = await get_user(message.from_user.id)
