@@ -1,4 +1,5 @@
 from aiogram import Router, F, types
+from aiogram.filters import Command
 from database import get_user
 from utils import parse_booking_text, slot_to_time
 from validators import validate_booking
@@ -7,15 +8,32 @@ from config import DB_PATH
 
 router = Router()
 
+# --- ДОБАВЬ ЭТОТ БЛОК (Инструкция) ---
+@router.message(Command("book"))
+async def cmd_book(message: types.Message):
+    await message.answer(
+        "📝 **Инструкция по бронированию**\n\n"
+        "Просто отправь мне сообщение в формате:\n"
+        "`[дата] [начало] [конец]`\n\n"
+        "**Примеры:**\n"
+        "• `10.03 14:00 16:30` — на 10 марта\n"
+        "• `15:00 17:00` — забронировать на сегодня\n\n"
+        "**Правила:**\n"
+        "• Минимум — 1 час (2 слота)\n"
+        "• Максимум — 3.5 часа в день\n"
+        "• Нельзя бронировать 2 дня подряд"
+    )
+
+# Твой старый код парсинга (оставляем без изменений)
 @router.message(F.text & ~F.text.startswith("/"))
 async def process_booking_text(message: types.Message):
     user = await get_user(message.from_user.id)
     if not user or not user['is_verified']:
-        return # Игнорируем текст от неверифицированных
+        return
 
     parsed = parse_booking_text(message.text)
     if not parsed:
-        await message.answer("Не удалось распознать бронь. Используй /book для инструкции.")
+        await message.answer("❌ Не удалось распознать формат. Используй /book для справки.")
         return
 
     is_valid, msg = await validate_booking(
@@ -39,9 +57,9 @@ async def process_booking_text(message: types.Message):
         await db.commit()
 
     start_time_str = slot_to_time(parsed['start_slot'])
-    end_time_str = slot_to_time(parsed['end_slot'] + 1) # Показываем конец по времени
+    end_time_str = slot_to_time(parsed['end_slot'] + 1)
 
-    await message.answer(f"✅ Готово! Забронировано:\n"
+    await message.answer(f"✅ **Готово! Забронировано:**\n"
                          f"📅 {parsed['date'].strftime('%d.%m')} ({parsed['date'].strftime('%A')})\n"
-                         f"⏰ {start_time_str} — {end_time_str} ({slots_count} слотов)\n"
+                         f"⏰ {start_time_str} — {end_time_str}\n"
                          f"👤 {user['username']}")
